@@ -119,6 +119,8 @@ def find_features_without_NaNs(features):
     for f in forbidden:
         if f in selectedFeatures:
             selectedFeatures.remove(f)
+
+    selectedFeatures.sort()
     return selectedFeatures
 
 
