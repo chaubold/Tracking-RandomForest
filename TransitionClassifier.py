@@ -232,11 +232,24 @@ class TransitionClassifier:
                 (np.asarray(self.labels)).astype("uint32").reshape(-1, 1))
         logger.info("RF trained with OOB Error {}".format(oob))
 
-    def predictSample(self, test_data):
-        return self.rf.predictLabels(test_data.astype('float32'))
+    def predictSample(self, test_data=None, f1=None, f2=None):
+        if test_data is not None:
+            return self.rf.predictLabels(test_data.astype('float32'))
+        else:
+            data = self.constructSampleFeatureVector(f1, f2)
+            if len(data.shape) < 2:
+                data = np.expand_dims(data, axis=0)
+            return self.rf.predictLabels(data.astype('float32'))
 
-    def predictProbabilities(self, test_data):
-        return self.rf.predictProbabilities(test_data.astype('float32'))
+    def predictProbabilities(self, test_data=None, f1=None, f2=None):
+        if test_data is not None:
+            return self.rf.predictProbabilities(test_data.astype('float32'))
+        else:
+            data = self.constructSampleFeatureVector(f1, f2)
+            print(data)
+            if len(data.shape) < 2:
+                data = np.expand_dims(data, axis=0)
+            return self.rf.predictProbabilities(data.astype('float32'))
 
     def predictLabels(self, test_data, threshold=0.5):
         prob = self.rf.predictProbabilities(test_data.astype('float32'))
