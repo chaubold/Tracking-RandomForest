@@ -144,13 +144,29 @@ class TransitionClassifier:
         self.labels.append(label)
         # else:
         #    self.labels = np.concatenate((np.array(self.labels),label)) # for adding batches of features
+        features = self.constructSampleFeatureVector(f1, f2)
+
+        if self._numSamples is None:
+            # use vstack
+            if self.mydata is None:
+                self.mydata = features
+            else:
+                self.mydata = np.vstack((self.mydata, features))
+        else:
+            # allocate full array once, then fill in row by row
+            if self.mydata is None:
+                self.mydata = np.zeros((self._numSamples, features.shape[0]))
+
+            assert(self._nextIdx < self._numSamples)
+            self.mydata[self._nextIdx, :] = features
+            self._nextIdx += 1
+
+    def constructSampleFeatureVector(self, f1, f2):
         res = []
         res2 = []
-
         names = []
         names2 = []
-
-        for key in selectedFeatures:
+        for key in self.selectedFeatures:
             if key == "Global<Maximum >" or key == "Global<Minimum >":
                 # the global min/max intensity is not interesting
                 continue
@@ -175,34 +191,20 @@ class TransitionClassifier:
                     for _ in range((f1[key] - f2[key]).size):
                         names.append(key)
                         names2.append(key)
-
         x = np.asarray(flatten(res))  # flatten
         x2 = np.asarray(flatten(res2))  # flatten
         assert (np.any(np.isnan(x)) == False)
         assert (np.any(np.isnan(x2)) == False)
         assert (np.any(np.isinf(x)) == False)
         assert (np.any(np.isinf(x2)) == False)
-
         features = np.concatenate((x, x2))
-        if self._numSamples is None:
-            # use vstack
-            if self.mydata is None:
-                self.mydata = features
-            else:
-                self.mydata = np.vstack((self.mydata, features))
-        else:
-            # allocate full array once, then fill in row by row
-            if self.mydata is None:
-                self.mydata = np.zeros((self._numSamples, features.shape[0]))
-
-            assert(self._nextIdx < self._numSamples)
-            self.mydata[self._nextIdx, :] = features
-            self._nextIdx += 1
 
         names = ['subtraction-' + n for n in names]
         names2 = ['multiplication-' + n for n in names2]
         allNames = names + names2
         self.featureNames = ['{}:{}'.format(i, n) for i, n in enumerate(allNames)]
+
+        return features
 
     # adding a comfortable function, where one can easily introduce the data
     def add_allData(self, mydata, labels):
